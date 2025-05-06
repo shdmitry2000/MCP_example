@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  mcp-server:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+    environment:
+      - MCP_SECRET_KEY=${MCP_SECRET_KEY:-development_secret_key_123}
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-me-sb-dgcp-dpoc-pocyosh-pr}
+      # Remove GOOGLE_APPLICATION_CREDENTIALS as we'll use default credentials 

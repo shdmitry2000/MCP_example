@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "local": {
+      "command": "python",
+      "args": ["server/server.py", "--mode", "local"],
+      "env": {
+        "MCP_SERVER_MODE": "local"
+      }
+    },
+    "remote": {
+      "command": "python",
+      "args": ["http://localhost:8000"],
+      "env": {
+        "MCP_SERVER_MODE": "remote"
+      }
+    }
+  }
+}

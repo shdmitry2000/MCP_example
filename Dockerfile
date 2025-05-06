@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM --platform=linux/amd64 python:3.12-slim
 
 WORKDIR /app
 
@@ -9,13 +9,21 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    python -c "import pandas; print(f'Pandas version: {pandas.__version__}')"
 
-# Copy the rest of the application
+# Copy application code
 COPY . .
 
-# Expose the port the app runs on
-EXPOSE 8000
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV MCP_SERVER_MODE=remote
+ENV PORT=8000
+ENV MCP_SERVER_URL=http://0.0.0.0:${PORT}
+ENV MCP_SECRET_KEY=development_secret_key_123
 
-# Command to run the application
-CMD ["python", "-m", "server.server", "--mode", "remote", "--host", "0.0.0.0", "--port", "8000"] 
+# Expose the port
+EXPOSE ${PORT}
+
+# Run the server with explicit host and port
+CMD ["sh", "-c", "python -m server.server --host 0.0.0.0 --port ${PORT:-8000} --mode remote"] 

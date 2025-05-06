@@ -8,8 +8,11 @@
       }
     },
     "remote": {
-      "command": "python",
-      "args": ["http://localhost:8000"],
+      "url": "https://mcp-server-630744526491.me-west1.run.app",
+      "auth": {
+        "username": "admin",
+        "password": "securepassword"
+      },
       "env": {
         "MCP_SERVER_MODE": "remote"
       }

@@ -48,8 +48,9 @@ class MCPClient:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.post(
-                    f"{self.server_url}/token",
-                    data={"username": username, "password": password}
+                    f"{self.server_url}/token/json",
+                    json={"username": username, "password": password},
+                    headers={"Content-Type": "application/json"}
                 )
                 
                 if response.status_code != 200:
@@ -106,20 +107,20 @@ class MCPClient:
                 return [self.create_tool_instance(tool) for tool in tools_response.tools]
             else:
                 # For remote mode, use HTTP
-                server_url = next((arg for arg in server_config["args"] if arg.startswith("http")), None)
-                if not server_url:
+                if "url" not in server_config:
                     raise ValueError("No URL found in remote server configuration")
 
                 # Remove trailing /mcp if present
-                self.server_url = server_url.rstrip("/")
+                self.server_url = server_config["url"].rstrip("/")
 
-                # Authenticate if no token yet
-                if not self.token:
-                    await self.authenticate("admin", "securepassword")
+                # Authenticate if credentials are provided
+                if "auth" in server_config:
+                    auth = server_config["auth"]
+                    await self.authenticate(auth["username"], auth["password"])
 
                 # Get tools
                 async with httpx.AsyncClient() as client:
-                    headers = {"Authorization": f"Bearer {self.token}"}
+                    headers = {"Authorization": f"Bearer {self.token}"} if self.token else {}
                     response = await client.get(
                         f"{self.server_url}/tools",
                         headers=headers

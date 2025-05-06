@@ -50,18 +50,26 @@ class ToolListResponse(BaseModel):
     tools: List[Dict[str, Any]]
 
 # Setup FastAPI for HTTP server
-app = FastAPI(title="MCP Server", description="Secure MCP Server with tools")
+app = FastAPI(
+    title="MCP Server",
+    description="Secure MCP Server with tools",
+    openapi_url="/openapi.json",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
 # Create MCP server
 mcp = FastMCP(app)
 
 # OAuth2 scheme
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 # Token authentication
 @app.post("/token", response_model=TokenResponse)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    logger.info(f"Authentication attempt for user: {form_data.username}")
     if not security_manager.authenticate_user(form_data.username, form_data.password):
+        logger.error(f"Authentication failed for user: {form_data.username}")
         raise HTTPException(
             status_code=401,
             detail="Invalid username or password",
@@ -69,6 +77,23 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         )
     
     token = security_manager.generate_token(form_data.username)
+    logger.info(f"Authentication successful for user: {form_data.username}")
+    return {"access_token": token}
+
+# JSON token authentication
+@app.post("/token/json", response_model=TokenResponse)
+async def login_json(user: User):
+    logger.info(f"JSON authentication attempt for user: {user.username}")
+    if not security_manager.authenticate_user(user.username, user.password):
+        logger.error(f"JSON authentication failed for user: {user.username}")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid username or password",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    token = security_manager.generate_token(user.username)
+    logger.info(f"JSON authentication successful for user: {user.username}")
     return {"access_token": token}
 
 # User dependency

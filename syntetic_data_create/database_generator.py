@@ -155,27 +155,14 @@ class DatabaseGenerator:
             metadata = table_config.get('metadata', {})
             primary_key = metadata.get('primary_key')
             
-            # Check if any field is marked as primary key in the fields themselves
-            fields = table_config.get('fields', {})
-            if not primary_key:
-                # Look for a field that should be primary key
-                for field_name, field_config in fields.items():
-                    if field_name.lower() in ['id', 'תעודת_זהות', 'מספר_כרטיס', 'מספר_חשבון']:
-                        primary_key = field_name
-                        break
-            
-            # Add auto-incrementing ID if no primary key found
-            if not primary_key:
-                columns['id'] = Column(Integer, primary_key=True, autoincrement=True)
-                logger.info(f"Added auto-increment primary key 'id' to table {table_name}")
-            
             # Add fields based on schema
+            fields = table_config.get('fields', {})
             for field_name, field_config in fields.items():
                 field_type = field_config.get('type', 'string')
                 constraints = field_config.get('constraints', {})
                 
-                # Determine if this field is the primary key
-                is_primary_key = (field_name == primary_key)
+                # Check if this field is marked as primary key in constraints
+                is_primary_key = constraints.get('primary_key', False)
                 
                 if field_type == 'string':
                     max_length = constraints.get('max_length', 255)
@@ -197,6 +184,11 @@ class DatabaseGenerator:
                     columns[field_name] = Column(String(100), primary_key=is_primary_key)
                 else:
                     columns[field_name] = Column(String(255), primary_key=is_primary_key)
+            
+            # If no primary key was found, add an auto-incrementing ID
+            if not any(col.primary_key for col in columns.values() if isinstance(col, Column)):
+                columns['id'] = Column(Integer, primary_key=True, autoincrement=True)
+                logger.info(f"Added auto-increment primary key 'id' to table {table_name}")
             
             # Create the table class
             table_class = type(table_name.capitalize(), (Base,), columns)

@@ -128,7 +128,7 @@ class DatabaseConnectedCreditCardsTools:
             # Get user information
             user_query = text("""
                 SELECT * FROM users 
-                WHERE id_number = :user_id OR תעודת_זהות = :user_id
+                WHERE israeli_id = :user_id
                 LIMIT 1
             """)
             user_result = session.execute(user_query, {"user_id": user_id}).fetchone()
@@ -146,7 +146,7 @@ class DatabaseConnectedCreditCardsTools:
             # Get account information
             account_query = text("""
                 SELECT * FROM accounts 
-                WHERE id_number = :user_id OR תעודת_זהות = :user_id
+                WHERE israeli_id = :user_id
             """)
             account_results = session.execute(account_query, {"user_id": user_id}).fetchall()
             accounts = [dict(row._mapping) if hasattr(row, '_mapping') else row._asdict() for row in account_results]
@@ -154,7 +154,7 @@ class DatabaseConnectedCreditCardsTools:
             # Get credit cards
             cards_query = text("""
                 SELECT * FROM credit_cards 
-                WHERE id_number = :user_id OR תעודת_זהות = :user_id
+                WHERE israeli_id = :user_id
             """)
             card_results = session.execute(cards_query, {"user_id": user_id}).fetchall()
             cards = [dict(row._mapping) if hasattr(row, '_mapping') else row._asdict() for row in card_results]
@@ -162,60 +162,63 @@ class DatabaseConnectedCreditCardsTools:
             # Get recent transactions (limit to last 20)
             transactions_query = text("""
                 SELECT t.* FROM transactions t
-                JOIN credit_cards c ON t.card_number = c.card_number OR t.מספר_כרטיס = c.מספר_כרטיס
-                WHERE c.id_number = :user_id OR c.תעודת_זהות = :user_id
-                ORDER BY t.transaction_date DESC, t.תאריך_עסקה DESC
+                JOIN credit_cards c ON t.card_number = c.card_number
+                WHERE c.israeli_id = :user_id
+                ORDER BY t.transaction_date DESC
                 LIMIT 20
             """)
             transaction_results = session.execute(transactions_query, {"user_id": user_id}).fetchall()
             transactions = [dict(row._mapping) if hasattr(row, '_mapping') else row._asdict() for row in transaction_results]
             
+            # Get default account if none exists
+            default_account = {
+                'account_number': f"ACC{user_id}",
+                'balance': 0,
+                'available_credit': 0,
+                'bank_branch': 1
+            }
+            
             # Format response to match MCP tools API
             response_data = {
                 "user_id": user_id,
-                "account_id": accounts[0].get('account_number', accounts[0].get('מספר_חשבון', f"ACC{user_id}")) if accounts else f"ACC{user_id}",
-                "name": f"{user_data.get('first_name', user_data.get('שם_פרטי', ''))} {user_data.get('last_name', user_data.get('שם_משפחה', ''))}",
-                "email": user_data.get('email', user_data.get('דואר_אלקטרוני', '')),
-                "balance": accounts[0].get('balance', accounts[0].get('יתרה', 0)) if accounts else 0,
-                "available_credit": accounts[0].get('available_credit', accounts[0].get('אשראי_זמין', 0)) if accounts else 0,
+                "account_id": accounts[0].get('account_number', default_account['account_number']) if accounts else default_account['account_number'],
+                "name": f"{user_data.get('first_name', '')} {user_data.get('last_name', '')}",
+                "email": user_data.get('email', ''),
+                "balance": accounts[0].get('balance', default_account['balance']) if accounts else default_account['balance'],
+                "available_credit": accounts[0].get('available_credit', default_account['available_credit']) if accounts else default_account['available_credit'],
                 "cards": [
                     {
-                        "type": card.get('card_type', card.get('סוג_כרטיס', 'Unknown')),
-                        "last_four": str(card.get('card_number', card.get('מספר_כרטיס', '0000')))[-4:],
-                        "expiry": str(card.get('expiry_date', card.get('תוקף', '12/28'))),
-                        "status": card.get('status', card.get('סטטוס', 'פעיל'))
+                        "type": card.get('card_type', 'Unknown'),
+                        "last_four": str(card.get('card_number', '0000'))[-4:],
+                        "expiry": str(card.get('expiry_date', '12/28')),
+                        "status": card.get('status', 'active')
                     } for card in cards
-                ],
+                ] if cards else [],
                 "transactions": [
                     {
-                        "date": str(trans.get('transaction_date', trans.get('תאריך_עסקה', ''))),
-                        "merchant": trans.get('business_name', trans.get('שם_עסק', 'Unknown Merchant')),
-                        "amount": float(trans.get('amount', trans.get('סכום', 0))),
-                        "status": trans.get('status', trans.get('סטטוס', 'נרשם')),
-                        "description": f"עסקה ב{trans.get('business_name', trans.get('שם_עסק', 'עסק'))}"
+                        "date": str(trans.get('transaction_date', '')),
+                        "merchant": trans.get('merchant_name', 'Unknown Merchant'),
+                        "amount": float(trans.get('amount', 0)),
+                        "status": trans.get('status', 'pending'),
+                        "description": trans.get('description', f"Transaction at {trans.get('merchant_name', 'business')}")
                     } for trans in transactions
-                ],
+                ] if transactions else [],
                 "account_info": {
-                    "account_number": accounts[0].get('account_number', accounts[0].get('מספר_חשבון', f"ACC{user_id}")) if accounts else f"ACC{user_id}",
-                    "branch": f"{accounts[0].get('bank_branch', accounts[0].get('סניף_בנק', 1)):03d}" if accounts else "001",
-                    "type": accounts[0].get('account_type', accounts[0].get('סוג_חשבון', 'חשבון פרטי')) if accounts else "חשבון פרטי",
-                    "status": accounts[0].get('status', accounts[0].get('סטטוס', 'פעיל')) if accounts else "פעיל",
-                    "balance": accounts[0].get('balance', accounts[0].get('יתרה', 0)) if accounts else 0,
-                    "available_credit": accounts[0].get('available_credit', accounts[0].get('אשראי_זמין', 0)) if accounts else 0,
-                    "currency": "ILS"
-                },
-                "error": None
+                    "account_number": accounts[0].get('account_number', default_account['account_number']) if accounts else default_account['account_number'],
+                    "branch": f"{accounts[0].get('bank_branch', default_account['bank_branch']):03d}" if accounts else f"{default_account['bank_branch']:03d}",
+                    "type": accounts[0].get('account_type', 'checking') if accounts else 'checking',
+                    "status": accounts[0].get('status', 'active') if accounts else 'active'
+                }
             }
             
-            session.close()
             logger.info(f"✅ Retrieved data for user {user_id} from database")
             return response_data
             
         except Exception as e:
             logger.error(f"❌ Error getting user data: {e}")
-            if 'session' in locals():
-                session.close()
-            return {"error": f"Database error: {str(e)}"}
+            return {"error": f"Failed to get user data: {str(e)}"}
+        finally:
+            session.close()
     
     def get_user_fields(self, user_id: str, fields: List[str]) -> Dict[str, Any]:
         """Get specific fields for a user from database."""
@@ -467,10 +470,10 @@ class DatabaseConnectedCreditCardsTools:
             with self.Session() as session:
                 result = session.execute(text("""
                     SELECT 
-                        תעודת_זהות as user_id,
-                        שם_פרטי as first_name,
-                        שם_משפחה as last_name,
-                        דואר_אלקטרוני as email
+                        israeli_id as user_id,
+                        first_name,
+                        last_name,
+                        email
                     FROM users 
                     LIMIT :limit
                 """), {"limit": limit})

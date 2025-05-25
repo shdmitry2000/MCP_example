@@ -13,6 +13,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
+from syntetic_data_create.field_mapper import HebrewEnglishFieldMapper
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ class SchemaConverter:
     
     def __init__(self):
         self.conversion_log = []
+        self.field_mapper = HebrewEnglishFieldMapper()
         
     def load_swagger_file(self, file_path: str) -> Dict[str, Any]:
         """Load Swagger/OpenAPI file (JSON or YAML)."""
@@ -137,10 +139,22 @@ class SchemaConverter:
         
         # Convert each property to field
         for prop_name, prop_def in properties.items():
+            # Convert Hebrew field name to English for database
+            english_name = self._convert_hebrew_to_english(prop_name)
+            
             field_def = self._convert_property_to_field(
-                prop_name, prop_def, target_system, prop_name in required_fields
+                english_name, prop_def, target_system, prop_name in required_fields
             )
-            table_def["fields"][prop_name] = field_def
+            
+            # Mark as primary key if this is the primary key field
+            if english_name == primary_key:
+                field_def["constraints"]["primary_key"] = True
+            
+            # Preserve Hebrew name in metadata
+            field_def['hebrew_name'] = prop_name
+            field_def['display_name'] = self._get_display_name(english_name)
+            
+            table_def["fields"][english_name] = field_def
         
         return table_def
     
@@ -307,6 +321,14 @@ class SchemaConverter:
             "conversions": self.conversion_log,
             "total_conversions": len(self.conversion_log)
         }
+    
+    def _convert_hebrew_to_english(self, hebrew_name: str) -> str:
+        """Convert Hebrew field name to English."""
+        return self.field_mapper.get_english_name(hebrew_name)
+    
+    def _get_display_name(self, field_name: str) -> str:
+        """Generate a human-readable display name from field name."""
+        return self.field_mapper.get_display_name(field_name)
 
 
 def main():

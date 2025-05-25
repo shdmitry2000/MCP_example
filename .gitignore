@@ -32,11 +32,19 @@ ENV/
 .vscode/
 *.swp
 *.swo
+.conda/
+.DS_Store
+*/.DS_Store 
+
 
 # Project specific
 data/
 *.log
 config/mcp_config.local.json
+db/*
+
+
+
 
 # AWS
 .aws/
@@ -49,3 +57,7 @@ aws.json
 me-sb-dgcp-dpoc-pocyosh-pr-19517d60a1ec.json    
 pydantic_utils/.DS_Store
 user_data_cache.pkl
+
+# Streamlit
+*.tmp
+*.tmp.*

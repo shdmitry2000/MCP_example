@@ -110,12 +110,29 @@ class Config:
         else:
             self.langfuse = None
         
+        
         # Database Configuration
         self.DATABASE_URL: str = os.getenv("DATABASE_URL", "")
         
         # Application Configuration
         self.DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
         self.ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    
+        self.DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///default_database.db")
+    
+        # Database folder configuration
+        self.DB_FOLDER: str = os.getenv("DB_FOLDER", "database_files")
+        self.DEFAULT_DB_NAME: str = os.getenv("DEFAULT_DB_NAME", "generated_data")
+        
+        # Ensure DB folder exists
+        Path(self.DB_FOLDER).mkdir(parents=True, exist_ok=True)
+        
+        # Update DATABASE_URL to use DB_FOLDER if it's a SQLite database
+        if self.DATABASE_URL.startswith("sqlite:///") and not os.path.isabs(self.DATABASE_URL.replace("sqlite:///", "")):
+            db_filename = self.DATABASE_URL.replace("sqlite:///", "")
+            self.DATABASE_URL = f"sqlite:///{self.DB_FOLDER}/{db_filename}"
+    
+    
     
     def _log_config(self):
         """Log non-sensitive configuration values."""
@@ -167,6 +184,32 @@ class Config:
     def get_langfuse(self):
         """Get the Langfuse client instance."""
         return self.langfuse
+    
+    def _get_default_db_folder(self) -> str:
+        """Get default database folder from config."""
+        return self.DB_FOLDER
+
+    def get_db_path(self, filename: str) -> str:
+        """Get full path for a database file."""
+        return os.path.join(self.DB_FOLDER, filename)
+
+    def get_schema_path(self, filename: str) -> str:
+        """Get full path for a schema file."""
+        schemas_dir = os.path.join(self.DB_FOLDER, "schemas")
+        Path(schemas_dir).mkdir(parents=True, exist_ok=True)
+        return os.path.join(schemas_dir, filename)
+
+    def get_export_path(self, folder_name: str) -> str:
+        """Get full path for export folder."""
+        export_dir = os.path.join(self.DB_FOLDER, "exports", folder_name)
+        Path(export_dir).mkdir(parents=True, exist_ok=True)
+        return export_dir
+
+    def get_log_path(self, filename: str) -> str:
+        """Get full path for log file."""
+        logs_dir = os.path.join(self.DB_FOLDER, "logs")
+        Path(logs_dir).mkdir(parents=True, exist_ok=True)
+        return os.path.join(logs_dir, filename)
 
 # Create a singleton instance
 config = Config() 

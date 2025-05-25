@@ -1,0 +1,485 @@
+{
+  "schema_info": {
+    "name": "Israeli Banking Data Generator API",
+    "version": "1.0.0",
+    "description": "API schema for generating Israeli banking synthetic data with Hebrew support",
+    "created": "2025-05-24T11:33:18.451582",
+    "locale": "he_IL",
+    "source": "swagger_conversion",
+    "target_system": "faker"
+  },
+  "tables": {
+    "users": {
+      "description": "Table for User",
+      "source_schema": "User",
+      "fields": {
+        "תעודת_זהות": {
+          "type": "string",
+          "description": "מספר תעודת זהות ישראלית (9 ספרות)",
+          "required": true,
+          "constraints": {
+            "pattern": "^[0-9]{9}$"
+          },
+          "generation": {
+            "generator": "israeli_id",
+            "locale": "he_IL"
+          }
+        },
+        "שם_פרטי": {
+          "type": "string",
+          "description": "שם פרטי בעברית",
+          "required": true,
+          "constraints": {
+            "max_length": 50
+          },
+          "generation": {
+            "generator": "hebrew_first_name",
+            "locale": "he_IL"
+          }
+        },
+        "שם_משפחה": {
+          "type": "string",
+          "description": "שם משפחה בעברית",
+          "required": true,
+          "constraints": {
+            "max_length": 50
+          },
+          "generation": {
+            "generator": "hebrew_last_name",
+            "locale": "he_IL"
+          }
+        },
+        "כתובת": {
+          "type": "string",
+          "description": "כתובת מגורים",
+          "required": false,
+          "constraints": {
+            "max_length": 200
+          },
+          "generation": {
+            "generator": "hebrew_address",
+            "locale": "he_IL"
+          }
+        },
+        "עיר": {
+          "type": "string",
+          "description": "עיר מגורים",
+          "required": false,
+          "constraints": {
+            "max_length": 50
+          },
+          "generation": {}
+        },
+        "טלפון": {
+          "type": "string",
+          "description": "מספר טלפון ישראלי",
+          "required": true,
+          "constraints": {
+            "pattern": "^05[0-9]-[0-9]{7}$"
+          },
+          "generation": {
+            "generator": "israeli_phone"
+          }
+        },
+        "דואר_אלקטרוני": {
+          "type": "string",
+          "description": "כתובת דואר אלקטרוני",
+          "required": false,
+          "constraints": {},
+          "generation": {
+            "generator": "email"
+          }
+        },
+        "תאריך_יצירה": {
+          "type": "string",
+          "description": "תאריך יצירת החשבון",
+          "required": false,
+          "constraints": {},
+          "generation": {
+            "generator": "past_datetime"
+          }
+        },
+        "סטטוס": {
+          "type": "choice",
+          "description": "סטטוס החשבון",
+          "required": false,
+          "constraints": {
+            "choices": [
+              "פעיל",
+              "לא פעיל",
+              "מושעה"
+            ]
+          },
+          "generation": {}
+        }
+      },
+      "constraints": {},
+      "relationships": {},
+      "primary_key": "תעודת_זהות"
+    },
+    "accounts": {
+      "description": "Table for Account",
+      "source_schema": "Account",
+      "fields": {
+        "מספר_חשבון": {
+          "type": "string",
+          "description": "מספר חשבון בנק",
+          "required": true,
+          "constraints": {
+            "max_length": 15
+          },
+          "generation": {}
+        },
+        "תעודת_זהות": {
+          "type": "string",
+          "description": "תעודת זהות בעל החשבון",
+          "required": true,
+          "constraints": {
+            "pattern": "^[0-9]{9}$"
+          },
+          "generation": {
+            "generator": "israeli_id",
+            "locale": "he_IL"
+          }
+        },
+        "סוג_חשבון": {
+          "type": "choice",
+          "description": "סוג החשבון",
+          "required": true,
+          "constraints": {
+            "choices": [
+              "חשבון פרטי",
+              "חשבון עסקי",
+              "חשבון חיסכון"
+            ]
+          },
+          "generation": {}
+        },
+        "יתרה": {
+          "type": "float",
+          "description": "יתרת החשבון בשקלים",
+          "required": false,
+          "constraints": {
+            "min": 0,
+            "max": 1000000
+          },
+          "generation": {}
+        },
+        "מסגרת_אשראי": {
+          "type": "integer",
+          "description": "מסגרת אשראי בשקלים",
+          "required": false,
+          "constraints": {
+            "min": 0,
+            "max": 100000
+          },
+          "generation": {}
+        },
+        "אשראי_זמין": {
+          "type": "float",
+          "description": "אשראי זמין בשקלים",
+          "required": false,
+          "constraints": {
+            "min": 0
+          },
+          "generation": {}
+        },
+        "סניף_בנק": {
+          "type": "integer",
+          "description": "מספר סניף הבנק",
+          "required": false,
+          "constraints": {
+            "min": 1,
+            "max": 999
+          },
+          "generation": {}
+        },
+        "תאריך_פתיחה": {
+          "type": "string",
+          "description": "תאריך פתיחת החשבון",
+          "required": false,
+          "constraints": {},
+          "generation": {
+            "generator": "past_date"
+          }
+        },
+        "סטטוס": {
+          "type": "choice",
+          "description": "סטטוס החשבון",
+          "required": false,
+          "constraints": {
+            "choices": [
+              "פעיל",
+              "חסום",
+              "סגור"
+            ]
+          },
+          "generation": {}
+        }
+      },
+      "constraints": {},
+      "relationships": {},
+      "primary_key": "תעודת_זהות"
+    },
+    "credit_cards": {
+      "description": "Table for CreditCard",
+      "source_schema": "CreditCard",
+      "fields": {
+        "מספר_כרטיס": {
+          "type": "string",
+          "description": "מספר כרטיס האשראי",
+          "required": true,
+          "constraints": {
+            "max_length": 19
+          },
+          "generation": {
+            "generator": "credit_card_number"
+          }
+        },
+        "תעודת_זהות": {
+          "type": "string",
+          "description": "תעודת זהות בעל הכרטיס",
+          "required": true,
+          "constraints": {
+            "pattern": "^[0-9]{9}$"
+          },
+          "generation": {
+            "generator": "israeli_id",
+            "locale": "he_IL"
+          }
+        },
+        "סוג_כרטיס": {
+          "type": "choice",
+          "description": "סוג כרטיס האשראי",
+          "required": true,
+          "constraints": {
+            "choices": [
+              "ויזה רגיל",
+              "ויזה זהב",
+              "ויזה פלטינום",
+              "מאסטרקארד רגיל",
+              "מאסטרקארד זהב",
+              "מאסטרקארד פלטינום",
+              "אמריקן אקספרס",
+              "ישראכרט",
+              "דביט רגיל",
+              "מפתח דיסקונט רגיל",
+              "FLY CARD מפתח דיסקונט"
+            ]
+          },
+          "generation": {}
+        },
+        "תוקף": {
+          "type": "string",
+          "description": "תאריך תפוגה (MM/YY)",
+          "required": true,
+          "constraints": {
+            "pattern": "^(0[1-9]|1[0-2])/[0-9]{2}$"
+          },
+          "generation": {}
+        },
+        "מסגרת_אשראי": {
+          "type": "integer",
+          "description": "מסגרת אשראי בכרטיס",
+          "required": false,
+          "constraints": {
+            "min": 1000,
+            "max": 100000
+          },
+          "generation": {}
+        },
+        "יתרה": {
+          "type": "float",
+          "description": "יתרת חיוב נוכחית",
+          "required": false,
+          "constraints": {
+            "min": 0,
+            "max": 100000
+          },
+          "generation": {}
+        },
+        "תשלומים_אחרונים": {
+          "type": "float",
+          "description": "סכום תשלומים אחרונים",
+          "required": false,
+          "constraints": {
+            "min": 0
+          },
+          "generation": {}
+        },
+        "תאריך_הנפקה": {
+          "type": "string",
+          "description": "תאריך הנפקת הכרטיס",
+          "required": false,
+          "constraints": {},
+          "generation": {
+            "generator": "past_date"
+          }
+        },
+        "דירוג_אשראי": {
+          "type": "integer",
+          "description": "דירוג אשראי (300-850)",
+          "required": false,
+          "constraints": {
+            "min": 300,
+            "max": 850
+          },
+          "generation": {}
+        },
+        "סטטוס": {
+          "type": "choice",
+          "description": "סטטוס הכרטיס",
+          "required": false,
+          "constraints": {
+            "choices": [
+              "פעיל",
+              "חסום",
+              "מושעה",
+              "בוטל"
+            ]
+          },
+          "generation": {}
+        }
+      },
+      "constraints": {},
+      "relationships": {},
+      "primary_key": "תעודת_זהות"
+    },
+    "transactions": {
+      "description": "Table for Transaction",
+      "source_schema": "Transaction",
+      "fields": {
+        "מספר_כרטיס": {
+          "type": "string",
+          "description": "מספר כרטיס שבוצעה בו העסקה",
+          "required": true,
+          "constraints": {
+            "max_length": 19
+          },
+          "generation": {
+            "generator": "credit_card_number"
+          }
+        },
+        "תאריך_עסקה": {
+          "type": "string",
+          "description": "תאריך ביצוע העסקה",
+          "required": true,
+          "constraints": {},
+          "generation": {
+            "generator": "past_date"
+          }
+        },
+        "סכום": {
+          "type": "float",
+          "description": "סכום העסקה בשקלים",
+          "required": true,
+          "constraints": {
+            "min": 0.01,
+            "max": 50000
+          },
+          "generation": {}
+        },
+        "קטגוריה": {
+          "type": "choice",
+          "description": "קטגוריית העסקה",
+          "required": false,
+          "constraints": {
+            "choices": [
+              "מזון ומשקאות",
+              "קניות ואופנה",
+              "בידור ותרבות",
+              "דלק ותחבורה",
+              "חשמל ומים",
+              "תקשורת",
+              "בריאות ורפואה",
+              "חינוך",
+              "ביטוח",
+              "אחר"
+            ]
+          },
+          "generation": {}
+        },
+        "שם_עסק": {
+          "type": "string",
+          "description": "שם בית העסק",
+          "required": true,
+          "constraints": {
+            "max_length": 100
+          },
+          "generation": {}
+        },
+        "סוג_עסקה": {
+          "type": "choice",
+          "description": "סוג העסקה",
+          "required": false,
+          "constraints": {
+            "choices": [
+              "רגילה",
+              "תשלומים",
+              "קרדיט",
+              "החזר"
+            ]
+          },
+          "generation": {}
+        },
+        "מספר_תשלומים": {
+          "type": "choice",
+          "description": "מספר תשלומים (אם רלוונטי)",
+          "required": false,
+          "constraints": {
+            "choices": [
+              1,
+              3,
+              6,
+              12,
+              24,
+              36
+            ]
+          },
+          "generation": {}
+        },
+        "סטטוס": {
+          "type": "choice",
+          "description": "סטטוס העסקה",
+          "required": false,
+          "constraints": {
+            "choices": [
+              "נרשם",
+              "ממתין",
+              "מאושר",
+              "נדחה",
+              "בוטל"
+            ]
+          },
+          "generation": {}
+        },
+        "תיאור": {
+          "type": "string",
+          "description": "תיאור נוסף של העסקה",
+          "required": false,
+          "constraints": {
+            "max_length": 200
+          },
+          "generation": {}
+        }
+      },
+      "constraints": {},
+      "relationships": {},
+      "primary_key": "מספר_כרטיס"
+    }
+  },
+  "generation_settings": {
+    "target_system": "faker",
+    "default_records_per_table": 1000,
+    "relationships": {},
+    "constraints": {},
+    "faker_options": {
+      "locale": "he_IL",
+      "seed": null,
+      "providers": [
+        "faker.providers.bank",
+        "faker.providers.credit_card"
+      ]
+    }
+  }
+}
